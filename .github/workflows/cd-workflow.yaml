@@ -13,18 +13,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Set up Kubectl
+        uses: azure/setup-kubectl@v1
+        with:
+          version: 'v1.21.0'
+
       - name: Set up Minikube
         run: |
-          sudo minikube start --vm-driver=none
-          minikube kubectl -- get pods  # Test Minikube setup
+          minikube start --driver=docker
+
+      - name: Build and Tag Docker Image
+        run: |
+          docker-compose -f docker-compose.yaml build
+
+      - name: Point Docker CLI to Minikube's Docker daemon
+        run: |
+          eval $(minikube -p minikube docker-env)
 
       - name: Deploy to Minikube
         run: |
-          kubectl apply -f ./path/to/your/kubernetes/resources
-
-      - name: Verify deployment
-        run: |
-          kubectl get pods
-
-      - name: Clean up Minikube
-        run: sudo minikube delete
+          kubectl apply -f k8s/
