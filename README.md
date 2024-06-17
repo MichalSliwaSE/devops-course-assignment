@@ -7,4 +7,5 @@ React application.
 Node JS application build with Node and Express.
 Takes requests that allow users to set, see and delete goals.
 ## Database:
+MongoDB
 
