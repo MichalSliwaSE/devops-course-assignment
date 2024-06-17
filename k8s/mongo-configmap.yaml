@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongo-env
+data:
+  MONGO_INITDB_ROOT_USERNAME: "michal"
+  MONGO_INITDB_ROOT_PASSWORD: "123"

@@ -1,0 +1,189 @@
+apiVersion: v1
+data:
+  App.js: |
+    import React, { useState, useEffect } from 'react';
+
+    import GoalInput from './components/goals/GoalInput';
+    import CourseGoals from './components/goals/CourseGoals';
+    import ErrorAlert from './components/UI/ErrorAlert';
+
+    function App() {
+      const [loadedGoals, setLoadedGoals] = useState([]);
+      const [isLoading, setIsLoading] = useState(false);
+      const [error, setError] = useState(null);
+
+      useEffect(function () {
+        async function fetchData() {
+          setIsLoading(true);
+
+          try {
+            const response = await fetch('http://localhost/goals');
+
+            const resData = await response.json();
+
+            if (!response.ok) {
+              throw new Error(resData.message || 'Fetching the goals failed.');
+            }
+
+            setLoadedGoals(resData.goals);
+          } catch (err) {
+            setError(
+              err.message ||
+                'Fetching goals failed - the server responsed with an error.'
+            );
+          }
+          setIsLoading(false);
+        }
+
+        fetchData();
+      }, []);
+
+      async function addGoalHandler(goalText) {
+        setIsLoading(true);
+
+        try {
+          const response = await fetch('http://localhost/goals', {
+            method: 'POST',
+            body: JSON.stringify({
+              text: goalText,
+            }),
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+
+          const resData = await response.json();
+
+          if (!response.ok) {
+            throw new Error(resData.message || 'Adding the goal failed.');
+          }
+
+          setLoadedGoals((prevGoals) => {
+            const updatedGoals = [
+              {
+                id: resData.goal.id,
+                text: goalText,
+              },
+              ...prevGoals,
+            ];
+            return updatedGoals;
+          });
+        } catch (err) {
+          setError(
+            err.message ||
+              'Adding a goal failed - the server responsed with an error.'
+          );
+        }
+        setIsLoading(false);
+      }
+
+      async function deleteGoalHandler(goalId) {
+        setIsLoading(true);
+
+        try {
+          const response = await fetch('http://localhost/goals/' + goalId, {
+            method: 'DELETE',
+          });
+
+          const resData = await response.json();
+
+          if (!response.ok) {
+            throw new Error(resData.message || 'Deleting the goal failed.');
+          }
+
+          setLoadedGoals((prevGoals) => {
+            const updatedGoals = prevGoals.filter((goal) => goal.id !== goalId);
+            return updatedGoals;
+          });
+        } catch (err) {
+          setError(
+            err.message ||
+              'Deleting the goal failed - the server responsed with an error.'
+          );
+        }
+        setIsLoading(false);
+      }
+
+      return (
+        <div>
+          {error && <ErrorAlert errorText={error} />}
+          <GoalInput onAddGoal={addGoalHandler} />
+          {!isLoading && (
+            <CourseGoals goals={loadedGoals} onDeleteGoal={deleteGoalHandler} />
+          )}
+        </div>
+      );
+    }
+
+    export default App;
+  index.css: |
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      font-family: sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background-color: #383838;
+    }
+
+    label {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      display: block;
+      font-size: 1.25rem;
+    }
+
+    input {
+      font: inherit;
+      padding: 1rem;
+      border: 1px solid #ccc;
+      font-size: 1.5rem;
+      display: block;
+      width: 100%;
+      margin-bottom: 1rem;
+      border-radius: 30px;
+      text-align: center;
+      color: #242424;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #6e0040;
+      background-color: #ffdff2;
+    }
+
+    button {
+      font: inherit;
+      background-color: #6e0040;
+      color: white;
+      border: 1px solid #6e0040;
+      border-radius: 30px;
+      padding: 0.5rem 1.5rem;
+      cursor: pointer;
+      font-size: 2rem;
+    }
+
+    button:hover,
+    button:active {
+      background-color: #b80e71;
+      border-color: #b80e71;
+    }
+  index.js: |+
+    import React from 'react';
+    import ReactDOM from 'react-dom/client';
+
+    import './index.css';
+    import App from './App';
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+
+kind: ConfigMap
+metadata:
+  labels:
+    io.kompose.service: frontend
+  name: frontend-cm0

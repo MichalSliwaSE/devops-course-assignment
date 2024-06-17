@@ -1,0 +1,30 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - main  # Trigger CD on push to main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Minikube
+        run: |
+          sudo minikube start --vm-driver=none
+          minikube kubectl -- get pods  # Test Minikube setup
+
+      - name: Deploy to Minikube
+        run: |
+          kubectl apply -f ./path/to/your/kubernetes/resources
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods
+
+      - name: Clean up Minikube
+        run: sudo minikube delete
